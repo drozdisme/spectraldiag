@@ -1,4 +1,5 @@
 #pragma once
+#define _USE_MATH_DEFINES
 #include <vector>
 #include <cmath>
 #include <numeric>
@@ -7,6 +8,8 @@
 #include <tuple>
 
 namespace sd {
+
+constexpr double SD_PI = 3.14159265358979323846;
 
 using Vec = std::vector<double>;
 using Mat = std::vector<Vec>;

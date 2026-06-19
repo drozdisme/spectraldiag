@@ -33,7 +33,7 @@ struct WarmstartResult {
 
 static double principal_angle(const Vec& u, const Vec& v) {
     double cu = dot(u, u), cv = dot(v, v);
-    if (cu < 1e-12 || cv < 1e-12) return M_PI / 2.0;
+    if (cu < 1e-12 || cv < 1e-12) return SD_PI / 2.0;
     double ip = std::abs(dot(u, v)) / (std::sqrt(cu) * std::sqrt(cv));
     ip = std::min(1.0, ip);
     return std::acos(ip);
@@ -75,16 +75,16 @@ SNRResult snr_gate(double alpha, double noise_var, double signal_var) {
     if (res.gated) {
         oss << "SNR GATE OPEN. Current alignment c=" << c_current
             << " exceeds critical threshold c*=" << res.c_star
-            << " (α=" << alpha << "). "
-            << "Feature capture is in the drift-dominated regime — "
+            << " (\u03b1=" << alpha << "). "
+            << "Feature capture is in the drift-dominated regime \u2014 "
             << "learning is proceeding above the bifurcation point.";
     } else {
         oss << "SNR GATE CLOSED. Current alignment c=" << c_current
             << " is below threshold c*=" << res.c_star
-            << " (SNR=" << snr << ", α=" << alpha << "). "
-            << "Learning is in the diffusion-dominated regime — "
+            << " (SNR=" << snr << ", \u03b1=" << alpha << "). "
+            << "Learning is in the diffusion-dominated regime \u2014 "
             << "the signal is being washed out by noise. "
-            << "Universal constant at full noise: c*=1/√2≈0.707.";
+            << "Universal constant at full noise: c*=1/\u221a2\u22480.707.";
     }
     res.verdict = oss.str();
     return res;
@@ -121,16 +121,16 @@ AlignResult alignment_signal(const std::vector<Vec>& subspace_dirs) {
 
     std::ostringstream oss;
     oss << std::fixed << std::setprecision(4);
-    oss << "ALIGNMENT SIGNAL Γ=" << gamma
-        << " = ∏cos(θᵢ) (product-state universality). ";
+    oss << "ALIGNMENT SIGNAL \u0393=" << gamma
+        << " = \u220fcos(\u03b8\u1d62) (product-state universality). ";
     for (int i = 0; i < (int)cos_thetas.size(); ++i)
-        oss << "θ" << i << "=" << std::acos(std::min(1.0,std::abs(cos_thetas[i]))) * 180.0 / M_PI << "° ";
+        oss << "\u03b8" << i << "=" << std::acos(std::min(1.0,std::abs(cos_thetas[i]))) * 180.0 / SD_PI << "\u00b0 ";
     if (res.product_law_holds) {
         oss << "Product law holds (residual=" << res.residual << "). "
             << "Alignment is consistent with symmetric product measure universality.";
     } else {
         oss << "Product law deviation=" << res.residual
-            << " — anisotropy or non-symmetric coupling detected.";
+            << " \u2014 anisotropy or non-symmetric coupling detected.";
     }
     res.verdict = oss.str();
     return res;
@@ -181,11 +181,11 @@ WarmstartResult warmstart_economy(
         << "Spectral floor=" << spectral_floor_est << ". ";
     if (res.gain_real) {
         oss << "Warmstart gain is REAL (floor < 0.5, c_recomp > 0.3). "
-            << "Asymptotic speedup factor ≈" << std::setprecision(2) << res.warmstart_gain << "×. "
+            << "Asymptotic speedup factor \u2248" << std::setprecision(2) << res.warmstart_gain << "\u00d7. "
             << "The compositional warm-start economy is not masked by finite-size spectral floors.";
     } else {
         oss << "Warmstart gain may be MASKED by finite-size spectral floor. "
-            << "At current scale the compositional economy is hidden — "
+            << "At current scale the compositional economy is hidden \u2014 "
             << "the asymptotic exponent requires larger model sizes to manifest.";
     }
     res.verdict = oss.str();

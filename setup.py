@@ -1,13 +1,14 @@
 import sys
 from setuptools import setup, Extension
 
-extra_compile_args = []
-extra_link_args = []
-
 if sys.platform == "win32":
-    extra_compile_args = ["/O2", "/std:c++17", "/EHsc"]
+    # /utf-8: treat source and execution charset as UTF-8 so \u escapes
+    # in string literals emit UTF-8 bytes (not the system codepage).
+    extra_compile_args = ["/O2", "/std:c++17", "/EHsc", "/utf-8"]
+    extra_link_args = []
 else:
     extra_compile_args = ["-O3", "-std=c++17", "-ffast-math"]
+    extra_link_args = []
 
 ext = Extension(
     "spectraldiag._core",

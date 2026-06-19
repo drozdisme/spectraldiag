@@ -194,17 +194,17 @@ StatResult stationarity_verdict(
     std::ostringstream oss;
     oss << std::fixed << std::setprecision(3);
     if (res.stationary) {
-        oss << "STATIONARY. Source exponent r_hat=" << r << " (\xc2\xb1" << r_std << ") "
+        oss << "STATIONARY. Source exponent r_hat=" << r << " (\u00b1" << r_std << ") "
             << "is consistent with r=0.5 (self-organised criticality). "
-            << "Model is pinned to the Sobolev minimax barrier \xce\xb2\xe2\x82\x80=" << res.beta_0 << ". "
-            << "Additional data improves loss at rate D^{-" << res.beta_0 << "} — "
+            << "Model is pinned to the Sobolev minimax barrier \u03b2\u2080=" << res.beta_0 << ". "
+            << "Additional data improves loss at rate D^{-" << res.beta_0 << "} \u2014 "
             << "no more than " << std::round((1.0 - res.beta_0) * 100)
             << "% further gain without compositional restructuring.";
         res.verdict = "stationary";
     } else {
-        oss << "TRANSIENT. Source exponent r_hat=" << r << " (\xc2\xb1" << r_std << ") "
+        oss << "TRANSIENT. Source exponent r_hat=" << r << " (\u00b1" << r_std << ") "
             << "deviates from r=0.5. Model kernel is still evolving. "
-            << "The barrier \xce\xb2\xe2\x82\x80=" << res.beta_0 << " is not yet binding; "
+            << "The barrier \u03b2\u2080=" << res.beta_0 << " is not yet binding; "
             << "continued training may still improve the loss exponent.";
         res.verdict = "transient";
     }
@@ -262,16 +262,16 @@ DimResult effective_dimension(
         oss << "COMPOSITIONAL STRUCTURE DETECTED. "
             << "Data intrinsic dimension d*=" << d_star
             << " but effective task dimension d_loc=" << d_loc << ". "
-            << "Compositional exponent \xce\xb1=" << res.alpha_comp
-            << " vs Sobolev baseline \xce\xb1=" << res.alpha_sobolev << " — "
-            << std::setprecision(1) << res.compression_gain << "\xc3\x97 compression gain. "
+            << "Compositional exponent \u03b1=" << res.alpha_comp
+            << " vs Sobolev baseline \u03b1=" << res.alpha_sobolev << " \u2014 "
+            << std::setprecision(1) << res.compression_gain << "\u00d7 compression gain. "
             << "A model exploiting this structure scales as N^{-"
             << std::setprecision(3) << res.alpha_comp << "}.";
     } else {
         oss << "NO COMPOSITIONAL STRUCTURE. "
             << "Effective dimension d_loc=" << d_loc
-            << " \xe2\x89\x88 d*=" << d_star << ". "
-            << "Approximation exponent \xce\xb1=" << res.alpha_sobolev << ". "
+            << " \u2248 d*=" << d_star << ". "
+            << "Approximation exponent \u03b1=" << res.alpha_sobolev << ". "
             << "Scaling is bounded by the full ambient dimension.";
     }
     res.verdict = oss.str();
@@ -307,27 +307,27 @@ BarrierResult barrier_certificate(
     std::ostringstream oss;
     oss << std::fixed << std::setprecision(4);
     oss << "BARRIER CERTIFICATE. "
-        << "Theoretical ceiling \xce\xb2\xe2\x82\x80=" << res.beta_0
+        << "Theoretical ceiling \u03b2\u2080=" << res.beta_0
         << " (Sobolev minimax, d*=" << d_star << ", s=" << s << "). ";
 
     if (d_loc < d_star * 0.85) {
         double beta_prime = 2.0 * s / (2.0 * s + d_loc);
-        oss << "Compositional barrier \xce\xb2'=" << beta_prime
-            << " (d_loc=" << d_loc << ") — "
+        oss << "Compositional barrier \u03b2'=" << beta_prime
+            << " (d_loc=" << d_loc << ") \u2014 "
             << std::setprecision(2) << (beta_prime / res.beta_0)
-            << "\xc3\x97 faster data scaling. ";
+            << "\u00d7 faster data scaling. ";
     }
 
     oss << std::setprecision(4);
     if (res.saturated) {
         oss << "Budget D=" << std::setprecision(0) << current_D
-            << " > D_cross\xe2\x89\x88" << d_cross
+            << " > D_cross\u2248" << d_cross
             << ": data-rich regime. Loss gap to theoretical floor = "
             << std::setprecision(4) << res.budget_gap << ".";
     } else {
         oss << std::setprecision(0)
             << "Budget D=" << current_D
-            << " < D_cross\xe2\x89\x88" << d_cross
+            << " < D_cross\u2248" << d_cross
             << ": barrier not yet binding. More data will help. "
             << "Tokens to crossover: " << std::max(0.0, d_cross - current_D) << ".";
     }
