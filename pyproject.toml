@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "spectraldiag"
+version = "0.1.0"
+description = "Mathematically rigorous ML model diagnostics: stationarity verdict, effective dimension, barrier certificate"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.9"
+keywords = ["machine-learning", "scaling-laws", "diagnostics", "benchmarking", "spectral"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: C++",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = []
+
+[project.optional-dependencies]
+torch  = ["torch>=2.0"]
+hf     = ["transformers>=4.30", "torch>=2.0"]
+lightning = ["lightning>=2.0", "torch>=2.0"]
+data   = ["numpy>=1.24", "scipy>=1.10", "scikit-learn>=1.3"]
+all    = ["torch>=2.0", "transformers>=4.30", "lightning>=2.0",
+          "numpy>=1.24", "scipy>=1.10", "scikit-learn>=1.3"]
+
+[project.urls]
+Homepage   = "https://github.com/drozdisme/spectraldiag"
+Repository = "https://github.com/drozdisme/spectraldiag"
+
+[tool.setuptools]
+package-dir = {"" = "python"}
+
+[tool.setuptools.packages.find]
+where = ["python"]

@@ -1,0 +1,16 @@
+# Compiled extension — built per-platform, never committed.
+# A committed .so breaks auditwheel/delocate (wrong platform tags).
+*.so
+*.pyd
+*.dll
+*.o
+*.obj
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
+__pycache__/
+*.pyc
+*.pyo
