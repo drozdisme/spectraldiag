@@ -12,36 +12,51 @@ pip install spectraldiag
 
 ## Three core functions
 
-### `stationarity_verdict(ntk_eigs, target_coeffs)`
+### `stationarity_verdict(ntk_eigs, target_coeffs, s=-1, d_star=-1)`
 
 Is your model's feature learning done, or still evolving?
 
 ```python
 from spectraldiag import stationarity_verdict
 
+# Without d_star: measures the source exponent r only.
 result = stationarity_verdict(ntk_eigs, target_coeffs)
 print(result.reason)
 # STATIONARY. Source exponent r_hat=0.491 (±0.031) is consistent with r=0.5
-# (self-organised criticality). Model is pinned to the Sobolev minimax barrier
-# β₀=0.556. Additional data will improve loss at rate D^{-0.556} — no more
-# than 44% further gain possible without compositional restructuring.
+# (self-organised criticality). The learned kernel has reached the stationary
+# attractor. Provide d_star to obtain the data-scaling barrier β₀.
+
+# With the measured data intrinsic dimension, you also get the barrier:
+result = stationarity_verdict(ntk_eigs, target_coeffs, s=1.0, d_star=8.2)
+# ... With d*=8.2, the Sobolev minimax barrier is β₀=0.196: asymptotically,
+# loss improves no faster than D^{-0.196} in the data-rich regime.
 ```
 
-**What it computes:** fits the source exponent `r` from the empirical NTK spectrum. `r ≈ 0.5` means your model has self-organised to the critical attractor — it's stationary, permanently bounded by `β₀ = 2s/(2s+d*)`.
+**What it computes:** fits the *realised source exponent* `r` from the empirical
+NTK spectrum. `r ≈ 0.5` certifies the model reached the stationary attractor.
+The data-scaling barrier `β₀ = 2s/(2s+d*)` is a **separate** quantity that needs
+the data intrinsic dimension `d*` — so it is only reported when you pass
+`d_star`. Without it, `beta_0` is returned as `-1` (undefined) rather than
+guessed. If `s` is omitted, it is inferred from the kernel decay via the Weyl
+law `s = b·d*/2`.
 
-### `effective_dimension(laplacian_eigs, approx_errors, model_sizes)`
+### `effective_dimension(laplacian_eigs, approx_errors, model_sizes, s=1.0)`
 
 Does your data have compositional structure your model could exploit?
 
 ```python
 from spectraldiag import effective_dimension
 
-result = effective_dimension(laplacian_eigs, approx_errors, model_sizes)
+result = effective_dimension(laplacian_eigs, approx_errors, model_sizes, s=1.0)
 print(result.verdict)
 # COMPOSITIONAL STRUCTURE DETECTED. Data intrinsic dimension d*=8.2 but
 # effective task dimension d_loc=2.1. Compositional approximation exponent
-# α=1.19 vs Sobolev baseline α=0.30 — 3.9× compression gain available.
+# α=0.95 vs Sobolev baseline α=0.24 — 3.9× compression gain available.
 ```
+
+`d*` comes from the graph-Laplacian spectrum; `d_loc` from the model-side
+approximation exponent `α = 2s/d_loc`, which is why the smoothness `s` is a
+parameter (default `1.0`).
 
 **What it computes:** estimates `d*` from the graph-Laplacian spectrum of your data, `d_loc` from the model-side approximation exponent. If `d_loc < d*`, genuine compositional structure exists — and the phase transition theorem says emergence is real.
 

@@ -26,7 +26,8 @@ def source_coeffs(n, b, r):
 class TestStationarity:
     def test_stationary_case(self):
         n, b = 80, 1.25
-        res = stationarity_verdict(sobolev_eigs(n, b), source_coeffs(n, b, 0.5), 1.25)
+        res = stationarity_verdict(sobolev_eigs(n, b), source_coeffs(n, b, 0.5),
+                                   s=1.25, d_star=2.0)
         assert res.stationary, f"Expected stationary, r_hat={res.r_hat}"
         assert 0.2 < res.r_hat < 0.8
         assert 0.0 < res.beta_0 < 1.0
@@ -34,7 +35,8 @@ class TestStationarity:
 
     def test_transient_case(self):
         n, b = 80, 1.25
-        res = stationarity_verdict(sobolev_eigs(n, b), source_coeffs(n, b, 1.5), 1.25)
+        res = stationarity_verdict(sobolev_eigs(n, b), source_coeffs(n, b, 1.5),
+                                   s=1.25, d_star=2.0)
         assert not res.stationary, f"Expected transient, r_hat={res.r_hat}"
         assert res.verdict == "transient"
 
@@ -42,11 +44,26 @@ class TestStationarity:
         res = stationarity_verdict([1.0, 0.5, 0.25], [0.1, 0.05, 0.02])
         assert res.verdict == "insufficient_data"
 
+    def test_beta_0_requires_d_star(self):
+        # Without d_star, beta_0 must be undefined (-1), not fabricated.
+        res = stationarity_verdict(sobolev_eigs(80, 1.0), source_coeffs(80, 1.0, 0.5))
+        assert res.beta_0 == -1.0
+        assert res.d_star == -1.0
+
     def test_beta_0_formula(self):
-        s, d_star = 1.25, 2.0
+        s, d_star = 1.0, 2.0
         b = 2 * s / d_star
-        res = stationarity_verdict(sobolev_eigs(80, b), source_coeffs(80, b, 0.5), s)
-        assert abs(res.beta_0 - 2 * s / (2 * s + d_star)) < 0.1
+        res = stationarity_verdict(sobolev_eigs(80, b), source_coeffs(80, b, 0.5),
+                                   s=s, d_star=d_star)
+        assert abs(res.beta_0 - 2 * s / (2 * s + d_star)) < 1e-6
+
+    def test_s_inferred_from_b_and_dstar(self):
+        # When s not given but d_star is, s = b * d_star / 2 (Weyl law).
+        n, b, d_star = 80, 1.0, 4.0
+        res = stationarity_verdict(sobolev_eigs(n, b), source_coeffs(n, b, 0.5),
+                                   d_star=d_star)
+        # b measured ~1.0, d_star=4 => s ~ 2.0
+        assert abs(res.s_hat - b * d_star / 2.0) < 0.3
 
     def test_reason_nonempty(self):
         res = stationarity_verdict(sobolev_eigs(80, 1.25), source_coeffs(80, 1.25, 0.5))

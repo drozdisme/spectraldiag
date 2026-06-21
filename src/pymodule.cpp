@@ -38,10 +38,12 @@ static std::vector<sd::Vec> list_to_mat(PyObject* obj) {
 static PyObject* py_stationarity(PyObject*, PyObject* args) {
     PyObject *eigs_o, *tc_o;
     double s_hint = -1.0;
-    if (!PyArg_ParseTuple(args, "OO|d", &eigs_o, &tc_o, &s_hint)) return nullptr;
+    double d_star = -1.0;
+    if (!PyArg_ParseTuple(args, "OO|dd", &eigs_o, &tc_o, &s_hint, &d_star))
+        return nullptr;
     sd::Vec eigs = list_to_vec(eigs_o);
     sd::Vec tc   = list_to_vec(tc_o);
-    sd::StatResult r = sd::stationarity_verdict(eigs, tc, s_hint);
+    sd::StatResult r = sd::stationarity_verdict(eigs, tc, s_hint, d_star);
     return Py_BuildValue(
         "{s:O,s:d,s:d,s:d,s:d,s:d,s:d,s:d,s:s,s:s}",
         "stationary", r.stationary ? Py_True : Py_False,
@@ -54,11 +56,12 @@ static PyObject* py_stationarity(PyObject*, PyObject* args) {
 
 static PyObject* py_effective_dim(PyObject*, PyObject* args) {
     PyObject *lap_o, *ae_o = nullptr, *ms_o = nullptr;
-    if (!PyArg_ParseTuple(args, "O|OO", &lap_o, &ae_o, &ms_o)) return nullptr;
+    double s = 1.0;
+    if (!PyArg_ParseTuple(args, "O|OOd", &lap_o, &ae_o, &ms_o, &s)) return nullptr;
     sd::Vec lap = list_to_vec(lap_o);
     sd::Vec ae  = list_to_vec(ae_o);
     sd::Vec ms  = list_to_vec(ms_o);
-    sd::DimResult r = sd::effective_dimension(lap, ae, ms);
+    sd::DimResult r = sd::effective_dimension(lap, ae, ms, s);
     return Py_BuildValue(
         "{s:d,s:d,s:d,s:d,s:O,s:d,s:d,s:s}",
         "d_loc", r.d_loc, "d_star", r.d_star,

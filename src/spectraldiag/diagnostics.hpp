@@ -149,7 +149,8 @@ static double estimate_intrinsic_dim(const Vec& laplacian_eigs) {
 StatResult stationarity_verdict(
     const Vec& ntk_eigs,
     const Vec& target_coeffs,
-    double s_hint = -1.0
+    double s_hint = -1.0,
+    double d_star = -1.0
 ) {
     StatResult res;
 
@@ -158,7 +159,8 @@ StatResult stationarity_verdict(
         res.stationary = true;
         res.r_hat  = 0.5;
         res.r_std  = 0.3;
-        res.beta_0 = 0.556;
+        res.beta_0 = -1.0;   // undefined: cannot estimate from < 6 modes
+        res.d_star = (d_star > 0) ? d_star : -1.0;
         res.verdict = "insufficient_data";
         res.reason = "Need at least 6 eigenvalues. Got " + std::to_string(n) + ".";
         return res;
@@ -171,17 +173,25 @@ StatResult stationarity_verdict(
     auto fit = fit_source_exp(pos_eigs, target_coeffs);
     double r     = fit.r;
     double r_std = fit.r_std;
-    double b     = fit.b;
+    double b     = fit.b;  // empirical kernel decay: sigma_k ~ k^{-b}
 
-    double s_est = (s_hint > 0) ? s_hint : b;
-    res.s_hat  = s_est;
     res.r_hat  = r;
     res.r_std  = r_std;
     res.r2_fit = fit.r2_b;
 
-    double d_star_est = 2.0;
-    res.d_star  = d_star_est;
-    res.beta_0  = 2.0 * s_est / (2.0 * s_est + d_star_est);
+    // The smoothness s relates to the kernel decay b and dimension d* by the
+    // Weyl law b = 2s/d*  =>  s = b * d* / 2. We can only recover s if d* is
+    // supplied; otherwise we expose the measured b and leave s/beta_0 undefined.
+    if (d_star > 0) {
+        res.d_star = d_star;
+        double s_est = (s_hint > 0) ? s_hint : (b * d_star / 2.0);
+        res.s_hat  = s_est;
+        res.beta_0 = 2.0 * s_est / (2.0 * s_est + d_star);
+    } else {
+        res.d_star = -1.0;          // not provided
+        res.s_hat  = (s_hint > 0) ? s_hint : -1.0;
+        res.beta_0 = -1.0;          // cannot compute beta_0 without d*
+    }
     res.beta_pred = (2.0 * r * b + 1.0 > 1e-6)
         ? 2.0 * r * b / (2.0 * r * b + 1.0) : 0.0;
 
@@ -196,16 +206,20 @@ StatResult stationarity_verdict(
     if (res.stationary) {
         oss << "STATIONARY. Source exponent r_hat=" << r << " (\u00b1" << r_std << ") "
             << "is consistent with r=0.5 (self-organised criticality). "
-            << "Model is pinned to the Sobolev minimax barrier \u03b2\u2080=" << res.beta_0 << ". "
-            << "Additional data improves loss at rate D^{-" << res.beta_0 << "} \u2014 "
-            << "no more than " << std::round((1.0 - res.beta_0) * 100)
-            << "% further gain without compositional restructuring.";
+            << "The learned kernel has reached the stationary attractor.";
+        if (res.beta_0 > 0) {
+            oss << " With d*=" << d_star << ", the Sobolev minimax barrier is "
+                << "\u03b2\u2080=" << res.beta_0 << ": asymptotically, loss improves no "
+                << "faster than D^{-" << res.beta_0 << "} in the data-rich regime.";
+        } else {
+            oss << " Provide d_star to obtain the data-scaling barrier \u03b2\u2080"
+                << " (\u03b2\u2080 = 2s/(2s+d*) requires the data intrinsic dimension).";
+        }
         res.verdict = "stationary";
     } else {
         oss << "TRANSIENT. Source exponent r_hat=" << r << " (\u00b1" << r_std << ") "
-            << "deviates from r=0.5. Model kernel is still evolving. "
-            << "The barrier \u03b2\u2080=" << res.beta_0 << " is not yet binding; "
-            << "continued training may still improve the loss exponent.";
+            << "deviates from r=0.5. The kernel is still evolving and has not "
+            << "reached the stationary attractor; the barrier is not yet binding.";
         res.verdict = "transient";
     }
     res.reason = oss.str();
@@ -215,7 +229,8 @@ StatResult stationarity_verdict(
 DimResult effective_dimension(
     const Vec& laplacian_eigs_data,
     const Vec& approx_errors,
-    const Vec& model_sizes
+    const Vec& model_sizes,
+    double s = 1.0
 ) {
     DimResult res;
 
@@ -235,9 +250,10 @@ DimResult effective_dimension(
         if ((int)ns.size() >= 3) {
             auto fit = fit_power_law(ns, errs);
             double alpha_obs = -fit.exp_val;
-            double s_est = 1.25;
+            // d_loc from the model-side approximation exponent alpha = 2s/d_loc.
+            // Requires s; supplied by the caller (defaults to 1.0).
             if (alpha_obs > 0.05) {
-                double d_loc_est = 2.0 * s_est / alpha_obs;
+                double d_loc_est = 2.0 * s / alpha_obs;
                 d_loc = std::max(0.5, std::min(d_loc_est, d_star * 2.0));
             }
         }
@@ -245,7 +261,6 @@ DimResult effective_dimension(
 
     res.d_loc = d_loc;
 
-    double s = 1.25;
     res.alpha_sobolev   = 2.0 * s / d_star;
     res.alpha_comp      = 2.0 * s / d_loc;
     res.compositional   = (d_loc < d_star * 0.85);

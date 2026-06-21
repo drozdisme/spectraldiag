@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "spectraldiag"
-version = "0.1.0"
+version = "0.2.0"
 description = "Mathematically rigorous ML model diagnostics: stationarity verdict, effective dimension, barrier certificate"
 readme = "README.md"
 license = { text = "MIT" }

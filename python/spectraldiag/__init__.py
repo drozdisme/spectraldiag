@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from . import _core
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 __all__ = [
     "stationarity_verdict", "effective_dimension", "barrier_certificate",
     "snr_gate", "alignment_signal", "warmstart_economy", "SpectralDiagnostics",
@@ -71,14 +71,30 @@ class AlignResult(_Result): pass
 class WarmstartResult(_Result): pass
 
 
-def stationarity_verdict(ntk_eigs, target_coeffs=None, s: float = -1.0) -> StatResult:
+def stationarity_verdict(ntk_eigs, target_coeffs=None, s: float = -1.0,
+                         d_star: float = -1.0) -> StatResult:
+    """Measure the realised source exponent r and test whether r ~ 1/2.
+
+    r ~ 1/2 certifies the stationary feature-learning attractor. The Sobolev
+    data-scaling barrier beta_0 = 2s/(2s+d*) is only reported if d_star is
+    supplied (it cannot be inferred from the NTK spectrum alone); otherwise
+    beta_0 is returned as -1 (undefined).
+    """
     return StatResult(_core.stationarity_verdict(
-        _to_list(ntk_eigs), _to_list(target_coeffs), float(s)))
+        _to_list(ntk_eigs), _to_list(target_coeffs), float(s), float(d_star)))
 
 
-def effective_dimension(laplacian_eigs, approx_errors=None, model_sizes=None) -> DimResult:
+def effective_dimension(laplacian_eigs, approx_errors=None, model_sizes=None,
+                        s: float = 1.0) -> DimResult:
+    """Estimate data intrinsic dimension d* and effective task dimension d_loc.
+
+    d* comes from the graph-Laplacian spectrum. d_loc comes from the model-side
+    approximation exponent alpha = 2s/d_loc and therefore requires the
+    smoothness s (default 1.0).
+    """
     return DimResult(_core.effective_dimension(
-        _to_list(laplacian_eigs), _to_list(approx_errors), _to_list(model_sizes)))
+        _to_list(laplacian_eigs), _to_list(approx_errors),
+        _to_list(model_sizes), float(s)))
 
 
 def barrier_certificate(d_star: float, d_loc: float, s: float,
